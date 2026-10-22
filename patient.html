@@ -1,0 +1,34 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Patient portal – MediVault</title><link rel="stylesheet" href="css/style.css"></head><body>
+<nav class="nav"><a class="logo" href="index.html"><i>✚</i><span>MediVault</span></a><div class="links"><a href="index.html" class="">Home</a><a href="patient.html" class="on">Patient</a><a href="hospital.html" class="">Hospital</a><a href="admin.html" class="">Admin</a></div><button class="btn" id="wbtn">Connect wallet</button></nav>
+<main class="wrap"><h1>Patient portal</h1><p class="sub">Manage who can see your medical records.</p>
+<div class="panel"><h2>Grant a doctor access</h2><div class="row"><div><label>Doctor wallet address</label><input id="doc" placeholder="0x…"></div><div><label>Days (1–365)</label><input id="days" type="number" min="1" max="365" value="30"></div><button class="btn" id="grant">Grant access</button></div></div>
+<div class="panel"><h2>Doctors with access</h2><div style="overflow-x:auto"><table><thead><tr><th>Doctor</th><th>Status</th><th></th></tr></thead><tbody id="docs"><tr><td colspan="3" class="empty">Connect your wallet to see this list.</td></tr></tbody></table></div></div>
+<div class="panel"><h2>Medical records</h2><label>Patient address (leave empty for your own; doctors enter their patient’s address)</label><div class="row2"><input id="who" placeholder="0x… (optional)"><button class="btn" id="load">Load records</button></div><div id="recs" style="margin-top:16px"></div></div></main>
+<footer>© 2026 MediVault · Built on BOT Chain<br><a href="https://botchain.ai" target="_blank" rel="noopener">BOT Chain Website</a> · <a href="https://scan.bohr.life" target="_blank" rel="noopener">BOT Chain Explorer</a></footer><div id="toast"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script><script src="js/app.js"></script>
+<script>
+document.addEventListener("ready",()=>{loadDocs();loadRecs()});
+async function loadDocs(){
+  const [d,u]=await vault.myDoctors(),now=Date.now()/1000;
+  $("#docs").innerHTML=d.length?d.map((a,i)=>{const on=Number(u[i])>now;return `<tr><td class="mono">${a}</td><td>${on?'<span class="badge">Active</span> until '+when(u[i]):'<span class="badge off">Revoked / expired</span>'}</td><td>${on?`<button class="btn sm danger" data-r="${a}">Revoke</button>`:""}</td></tr>`}).join(""):'<tr><td colspan="3" class="empty">No doctor has been given access yet.</td></tr>';
+  document.querySelectorAll("[data-r]").forEach(b=>b.onclick=async()=>{if(await tx(vault.revoke(b.dataset.r),"Access revoked"))loadDocs()});
+}
+async function loadRecs(){
+  if(!vault)return needWallet($("#recs"));
+  const p=$("#who").value.trim()||account;if(!ethers.isAddress(p))return toast("Invalid patient address",1);
+  $("#recs").innerHTML='<p class="empty">Loading…</p>';
+  try{
+    const n=Number(await vault.recordCount(p));let h="";
+    for(let i=n-1;i>=0;i--){const r=await vault.getRecord(p,i);
+      h+=`<div class="rec"><div class="top"><span class="badge">${esc(r[1])}</span><span>${when(r[4])}</span></div><p>${esc(r[3])||"<i>No note</i>"}</p><p class="mono">File: ${esc(r[2])||"—"}</p><p class="mono" style="color:var(--mut)">Hospital: ${r[0]}</p></div>`}
+    $("#recs").innerHTML=h||'<p class="empty">No records found.</p>';
+  }catch(e){$("#recs").innerHTML='<p class="empty">You don’t have access to these records.</p>'}
+}
+$("#load").onclick=loadRecs;
+$("#grant").onclick=async()=>{
+  if(!vault)return toast("Connect your wallet first.",1);
+  const a=$("#doc").value.trim(),d=Number($("#days").value);
+  if(!ethers.isAddress(a))return toast("Enter a valid doctor address",1);
+  if(!(d>=1&&d<=365))return toast("Days must be between 1 and 365",1);
+  if(await tx(vault.grant(a,d),"Access granted")){$("#doc").value="";loadDocs()}
+};
+</script></body></html>

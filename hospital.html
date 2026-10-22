@@ -1,0 +1,18 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hospital portal – MediVault</title><link rel="stylesheet" href="css/style.css"></head><body>
+<nav class="nav"><a class="logo" href="index.html"><i>✚</i><span>MediVault</span></a><div class="links"><a href="index.html" class="">Home</a><a href="patient.html" class="">Patient</a><a href="hospital.html" class="on">Hospital</a><a href="admin.html" class="">Admin</a></div><button class="btn" id="wbtn">Connect wallet</button></nav>
+<main class="wrap"><h1>Hospital portal</h1><p class="sub">Add a medical record to a patient’s vault.</p><div id="gate"><div class="notice">Connect your wallet to continue.</div></div>
+<div class="panel" id="form" style="display:none"><h2>New record</h2><label>Patient wallet address</label><input id="pat" placeholder="0x…">
+<label>Category</label><select id="cat"><option>Consultation</option><option>Lab result</option><option>Prescription</option><option>Imaging</option><option>Vaccination</option><option>Surgery</option><option>Other</option></select>
+<label>Encrypted file hash / IPFS CID (optional)</label><input id="fh" placeholder="bafy…"><label>Clinical note</label><textarea id="note" rows="4" placeholder="Short summary. Do not include sensitive details."></textarea><br><br><button class="btn" id="add">Add record</button></div></main>
+<footer>© 2026 MediVault · Built on BOT Chain<br><a href="https://botchain.ai" target="_blank" rel="noopener">BOT Chain Website</a> · <a href="https://scan.bohr.life" target="_blank" rel="noopener">BOT Chain Explorer</a></footer><div id="toast"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script><script src="js/app.js"></script>
+<script>
+document.addEventListener("ready",async()=>{
+  const h=await vault.hospitals(account);
+  if(h[1]){$("#gate").innerHTML='<div class="panel"><span class="badge">Approved hospital</span> <b>'+esc(h[0])+'</b></div>';$("#form").style.display="block"}
+  else $("#gate").innerHTML='<div class="notice">This wallet isn’t an approved hospital. Ask the network admin to register it.</div>';
+});
+$("#add").onclick=async()=>{
+  const p=$("#pat").value.trim();if(!ethers.isAddress(p))return toast("Enter a valid patient address",1);
+  if(await tx(vault.addRecord(p,$("#cat").value,$("#fh").value.trim(),$("#note").value.trim()),"Record added")){$("#note").value="";$("#fh").value=""}
+};
+</script></body></html>

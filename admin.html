@@ -1,0 +1,24 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin – MediVault</title><link rel="stylesheet" href="css/style.css"></head><body>
+<nav class="nav"><a class="logo" href="index.html"><i>✚</i><span>MediVault</span></a><div class="links"><a href="index.html" class="">Home</a><a href="patient.html" class="">Patient</a><a href="hospital.html" class="">Hospital</a><a href="admin.html" class="on">Admin</a></div><button class="btn" id="wbtn">Connect wallet</button></nav>
+<main class="wrap"><h1>Network admin</h1><p class="sub">Approve or remove hospitals.</p><div id="gate"><div class="notice">Connect your wallet to continue.</div></div>
+<div id="adm" style="display:none"><div class="panel"><h2>Register a hospital</h2><div class="row" style="grid-template-columns:1fr 1fr auto"><div><label>Hospital wallet</label><input id="ha" placeholder="0x…"></div><div><label>Hospital name</label><input id="hn" placeholder="e.g. Lagos General"></div><button class="btn" id="addh">Register</button></div></div>
+<div class="panel"><h2>Hospitals</h2><div style="overflow-x:auto"><table><thead><tr><th>Name</th><th>Wallet</th><th>Status</th><th></th></tr></thead><tbody id="hl"></tbody></table></div></div></div></main>
+<footer>© 2026 MediVault · Built on BOT Chain<br><a href="https://botchain.ai" target="_blank" rel="noopener">BOT Chain Website</a> · <a href="https://scan.bohr.life" target="_blank" rel="noopener">BOT Chain Explorer</a></footer><div id="toast"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script><script src="js/app.js"></script>
+<script>
+document.addEventListener("ready",async()=>{
+  if((await vault.admin()).toLowerCase()!==account.toLowerCase()){$("#gate").innerHTML='<div class="notice">Only the contract admin can use this page.</div>';return}
+  $("#gate").innerHTML="";$("#adm").style.display="block";list();
+});
+async function list(){
+  const n=Number(await vault.hospitalCount());let h="";
+  for(let i=0;i<n;i++){const [a,name,on]=await vault.hospitalAt(i);
+    h+=`<tr><td><b>${esc(name)}</b></td><td class="mono">${a}</td><td>${on?'<span class="badge">Active</span>':'<span class="badge off">Removed</span>'}</td><td>${on?`<button class="btn sm danger" data-r="${a}">Remove</button>`:""}</td></tr>`}
+  $("#hl").innerHTML=h||'<tr><td colspan="4" class="empty">No hospitals registered yet.</td></tr>';
+  document.querySelectorAll("[data-r]").forEach(b=>b.onclick=async()=>{if(await tx(vault.removeHospital(b.dataset.r),"Hospital removed"))list()});
+}
+$("#addh").onclick=async()=>{
+  const a=$("#ha").value.trim(),n=$("#hn").value.trim();
+  if(!ethers.isAddress(a)||!n)return toast("Enter a valid address and a name",1);
+  if(await tx(vault.addHospital(a,n),"Hospital registered")){$("#ha").value="";$("#hn").value="";list()}
+};
+</script></body></html>
