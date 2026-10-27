@@ -4,7 +4,7 @@
 <div class="panel" id="form" style="display:none"><h2>New record</h2><label>Patient wallet address</label><input id="pat" placeholder="0x…">
 <label>Category</label><select id="cat"><option>Consultation</option><option>Lab result</option><option>Prescription</option><option>Imaging</option><option>Vaccination</option><option>Surgery</option><option>Other</option></select>
 <label>Encrypted file hash / IPFS CID (optional)</label><input id="fh" placeholder="bafy…"><label>Clinical note</label><textarea id="note" rows="4" placeholder="Short summary. Do not include sensitive details."></textarea><br><br><button class="btn" id="add">Add record</button></div></main>
-<footer>© 2026 MediVault · Built on BOT Chain<br><a href="https://botchain.ai" target="_blank" rel="noopener">BOT Chain Website</a> · <a href="https://scan.bohr.life" target="_blank" rel="noopener">BOT Chain Explorer</a></footer><div id="toast"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script><script src="js/app.js"></script>
+<footer>© 2026 MediVault · Built on BOT Chain<br><a href="https://botchain.ai" target="_blank" rel="noopener">BOT Chain Website</a> · <a href="https://scan.botchain.ai" target="_blank" rel="noopener">BOT Chain Explorer</a></footer><div id="toast"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script><script src="js/app.js"></script>
 <script>
 document.addEventListener("ready",async()=>{
   const h=await vault.hospitals(account);

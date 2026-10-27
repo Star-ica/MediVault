@@ -3,7 +3,7 @@
 <main class="wrap"><h1>Network admin</h1><p class="sub">Approve or remove hospitals.</p><div id="gate"><div class="notice">Connect your wallet to continue.</div></div>
 <div id="adm" style="display:none"><div class="panel"><h2>Register a hospital</h2><div class="row" style="grid-template-columns:1fr 1fr auto"><div><label>Hospital wallet</label><input id="ha" placeholder="0x…"></div><div><label>Hospital name</label><input id="hn" placeholder="e.g. Lagos General"></div><button class="btn" id="addh">Register</button></div></div>
 <div class="panel"><h2>Hospitals</h2><div style="overflow-x:auto"><table><thead><tr><th>Name</th><th>Wallet</th><th>Status</th><th></th></tr></thead><tbody id="hl"></tbody></table></div></div></div></main>
-<footer>© 2026 MediVault · Built on BOT Chain<br><a href="https://botchain.ai" target="_blank" rel="noopener">BOT Chain Website</a> · <a href="https://scan.bohr.life" target="_blank" rel="noopener">BOT Chain Explorer</a></footer><div id="toast"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script><script src="js/app.js"></script>
+<footer>© 2026 MediVault · Built on BOT Chain<br><a href="https://botchain.ai" target="_blank" rel="noopener">BOT Chain Website</a> · <a href="https://scan.botchain.ai" target="_blank" rel="noopener">BOT Chain Explorer</a></footer><div id="toast"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script><script src="js/app.js"></script>
 <script>
 document.addEventListener("ready",async()=>{
   if((await vault.admin()).toLowerCase()!==account.toLowerCase()){$("#gate").innerHTML='<div class="notice">Only the contract admin can use this page.</div>';return}

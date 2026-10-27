@@ -1,6 +1,6 @@
-const CHAIN={id:968,hex:"0x3c8",name:"BOT Chain Testnet",symbol:"BOT",rpc:"https://rpc.bohr.life",explorer:"https://scan.bohr.life",website:"https://botchain.ai"};
+const CHAIN={id:677,hex:"0x2a5",name:"BOT Chain ",symbol:"BOT",rpc:"https://rpc.botchain.ai",explorer:"https://scan.botchain.ai",website:"https://botchain.ai"};
 // TODO: replace with your deployed MediVault address
-const CONTRACT_ADDRESS="0xA8cB7a592453f6ac164439235f4f477495b78995";
+const CONTRACT_ADDRESS="0x1be639c195cEa66f04167f062Cb8D8cEaCd26242";
 const ABI=["function admin() view returns (address)","function hospitals(address) view returns (string name,bool active)","function addHospital(address h,string name)","function removeHospital(address h)","function hospitalCount() view returns (uint256)","function hospitalAt(uint256 i) view returns (address,string,bool)","function grant(address doctor,uint256 daysValid)","function revoke(address doctor)","function myDoctors() view returns (address[],uint256[])","function addRecord(address patient,string category,string fileHash,string note)","function recordCount(address patient) view returns (uint256)","function getRecord(address patient,uint256 id) view returns (address,string,string,string,uint256)","function hasAccess(address patient,address viewer) view returns (bool)"];
 let signer,account,vault;
 const $=s=>document.querySelector(s);
