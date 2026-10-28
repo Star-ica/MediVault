@@ -1,16 +1,610 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Your health records, under your control – MediVault</title><link rel="stylesheet" href="css/style.css"></head><body>
-<nav class="nav"><a class="logo" href="index.html"><i>✚</i><span>MediVault</span></a><div class="links"><a href="index.html" class="on">Home</a><a href="patient.html" class="">Patient</a><a href="hospital.html" class="">Hospital</a><a href="admin.html" class="">Admin</a></div><button class="btn" id="wbtn">Connect wallet</button></nav>
-<section class="hero"><span class="tag">Built on BOT Chain</span><h1>Your health records,<br><span>under your control</span></h1><p>MediVault lets patients own their medical history. Approved hospitals add records, and you decide which doctors can see them, and for how long.</p><a class="btn" href="patient.html">Open patient portal</a><a class="btn ghost" href="hospital.html">Hospital access</a></section>
-<div class="sec"><h2>Why MediVault</h2><p class="lead">Privacy, consent and a verifiable audit trail.</p><div class="grid">
-<div class="card"><div class="ico">🔐</div><h3>Patient-owned</h3><p>Records belong to your wallet. Nobody sees them without your consent.</p></div>
-<div class="card"><div class="ico">🏥</div><h3>Verified hospitals</h3><p>Only hospitals approved by the network admin can add records.</p></div>
-<div class="card"><div class="ico">⏱️</div><h3>Time-limited access</h3><p>Grant a doctor access for 1 to 365 days. It expires automatically.</p></div>
-<div class="card"><div class="ico">🚫</div><h3>Instant revoke</h3><p>Withdraw a doctor’s access with a single transaction.</p></div>
-<div class="card"><div class="ico">🧾</div><h3>Audit trail</h3><p>Every record, grant and revoke is timestamped on-chain.</p></div>
-<div class="card"><div class="ico">📎</div><h3>Files stay off-chain</h3><p>Only an encrypted file’s hash or IPFS CID is stored, never the file.</p></div></div></div>
-<div class="sec"><h2>How it works</h2><p class="lead">Three roles, one shared source of truth.</p><div class="grid">
-<div class="card"><div class="num">1</div><h3>Hospital adds a record</h3><p>After a visit, an approved hospital logs the record against your wallet address.</p></div>
-<div class="card"><div class="num">2</div><h3>You grant access</h3><p>Share your address with a new doctor and grant them access for a set time.</p></div>
-<div class="card"><div class="num">3</div><h3>Doctor reads the history</h3><p>The doctor enters your address to view the records you’ve shared.</p></div></div></div>
-<div class="cta"><h2>Take ownership of your health data</h2><p>Connect your wallet to view your records and manage access.</p><a class="btn" href="patient.html">Get started</a></div>
-<footer>© 2026 MediVault · Built on BOT Chain<br><a href="https://botchain.ai" target="_blank" rel="noopener">BOT Chain Website</a> · <a href="https://scan.botchain.ai" target="_blank" rel="noopener">BOT Chain Explorer</a></footer><div id="toast"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script><script src="js/app.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>MediVault - Patient-Owned Health Records</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0B0F17',
+                        glassBg: 'rgba(19, 26, 42, 0.7)',
+                        neon: '#10b981', // Emerald 500
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Ethers v6 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <style>
+        body { background-color: #0B0F17; background-image: radial-gradient(circle at top right, rgba(16, 185, 129, 0.05), transparent 400px); color: #e2e8f0; }
+        .glass-card { background: rgba(19, 26, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); }
+        .neon-border:focus-within { border-color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
+        .btn-neon { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); transition: all 0.3s ease; }
+        .btn-neon:hover:not(:disabled) { background: #10b981; color: #0B0F17; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); border-color: #10b981; }
+        .btn-neon:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); transition: all 0.3s ease; }
+        .btn-danger:hover:not(:disabled) { background: #ef4444; color: #fff; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); border-color: #ef4444; }
+        .input-glass { background: rgba(15, 23, 35, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); outline: none; transition: all 0.2s; }
+        .input-glass:focus { border-color: #10b981; }
+        .nav-link { border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .nav-link.active { color: #10b981; border-bottom: 2px solid #10b981; }
+        #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 50; display: flex; flex-direction: column; gap: 0.5rem; }
+        .toast { animation: slideIn 0.3s ease-out forwards; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        /* Custom Scrollbar for tables */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans">
+
+    <!-- Navigation -->
+    <nav class="glass-card sticky top-0 z-40 border-b border-white/5">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-8">
+                <a href="#" onclick="switchTab('tab-home')" class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="text-neon">✚</span> MediVault
+                </a>
+                <div class="hidden md:flex gap-6 text-sm font-medium text-gray-400 h-16">
+                    <button onclick="switchTab('tab-home')" id="nav-home" class="nav-link active h-full px-1 hover:text-white">Home</button>
+                    <button onclick="switchTab('tab-patient')" id="nav-patient" class="nav-link h-full px-1 hover:text-white">Patient</button>
+                    <button onclick="switchTab('tab-hospital')" id="nav-hospital" class="nav-link h-full px-1 hover:text-white">Hospital</button>
+                    <button onclick="switchTab('tab-admin')" id="nav-admin" class="nav-link h-full px-1 hover:text-white">Admin</button>
+                </div>
+            </div>
+            <button id="btn-connect" class="btn-neon px-5 py-2 rounded-lg font-medium text-sm flex items-center gap-2">
+                <span id="wallet-dot" class="w-2 h-2 rounded-full bg-red-500"></span>
+                <span id="wallet-text">Connect Wallet</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-8 relative">
+
+        <!-- 1. HOME TAB -->
+        <section id="tab-home" class="tab-content block space-y-12">
+            <div class="text-center py-16 space-y-6">
+                <span class="px-3 py-1 text-xs font-semibold text-neon border border-neon/30 rounded-full bg-neon/5">Built on EVM</span>
+                <h1 class="text-5xl font-bold tracking-tight text-white">Your health records,<br><span class="text-neon">under your control</span></h1>
+                <p class="text-gray-400 max-w-2xl mx-auto text-lg">MediVault lets patients own their medical history. Approved hospitals log records, and you decide which doctors get access.</p>
+                <div class="flex justify-center gap-4 pt-4">
+                    <button onclick="switchTab('tab-patient')" class="btn-neon px-6 py-3 rounded-lg font-semibold">Open Patient Portal</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-card p-6 rounded-xl">
+                    <div class="text-2xl mb-3">🔐</div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Patient-Owned</h3>
+                    <p class="text-gray-400 text-sm">Records map directly to your wallet. Cryptographically secured and private by default.</p>
+                </div>
+                <div class="glass-card p-6 rounded-xl">
+                    <div class="text-2xl mb-3">⏱️</div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Time-Locked Access</h3>
+                    <p class="text-gray-400 text-sm">Grant doctors access for specific durations. Permissions expire automatically.</p>
+                </div>
+                <div class="glass-card p-6 rounded-xl">
+                    <div class="text-2xl mb-3">🧾</div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Immutable Audit</h3>
+                    <p class="text-gray-400 text-sm">Every record issuance, grant, and revocation is permanently timestamped on-chain.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. PATIENT TAB -->
+        <section id="tab-patient" class="tab-content hidden space-y-6">
+            <div>
+                <h1 class="text-2xl font-bold text-white mb-1">Patient Portal</h1>
+                <p class="text-gray-400 text-sm">Manage access control and view your medical history.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Access Management -->
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="glass-card p-6 rounded-xl">
+                        <h2 class="text-lg font-semibold text-white mb-4">Grant Access</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Doctor Wallet Address</label>
+                                <input type="text" id="p-grant-address" class="input-glass w-full px-4 py-2 rounded-lg text-sm text-white" placeholder="0x...">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Duration (Days)</label>
+                                <input type="number" id="p-grant-days" class="input-glass w-full px-4 py-2 rounded-lg text-sm text-white" value="30" min="1" max="365">
+                            </div>
+                            <button id="btn-grant" class="btn-neon w-full py-2 rounded-lg font-medium text-sm">Grant Doctor Access</button>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-6 rounded-xl overflow-hidden flex flex-col h-[300px]">
+                        <h2 class="text-lg font-semibold text-white mb-4">Authorized Doctors</h2>
+                        <div class="overflow-y-auto flex-grow pr-2">
+                            <div id="p-doctors-list" class="space-y-3">
+                                <p class="text-sm text-gray-500 italic">Connect wallet to view authorizations.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Records View -->
+                <div class="lg:col-span-2 glass-card p-6 rounded-xl flex flex-col h-[650px]">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <h2 class="text-lg font-semibold text-white">Medical Records</h2>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <input type="text" id="p-view-address" class="input-glass w-full sm:w-64 px-4 py-2 rounded-lg text-sm text-white" placeholder="Patient Address (Leave blank for self)">
+                            <button id="btn-load-records" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium border border-gray-700 transition">Load</button>
+                        </div>
+                    </div>
+                    <div class="overflow-y-auto flex-grow pr-2 space-y-4" id="p-records-list">
+                        <p class="text-sm text-gray-500 italic text-center mt-10">Connect wallet to view your records.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. HOSPITAL TAB -->
+        <section id="tab-hospital" class="tab-content hidden space-y-6">
+            <div>
+                <h1 class="text-2xl font-bold text-white mb-1">Hospital Portal</h1>
+                <p class="text-gray-400 text-sm">Issue immutable health records to patient vaults.</p>
+            </div>
+
+            <!-- Registration Form for Unauthorized Users -->
+            <div id="h-unauthorized" class="max-w-xl mx-auto glass-card p-8 rounded-xl border-yellow-500/20">
+                <div class="text-center mb-6">
+                    <span class="text-3xl mb-2 block">🏥</span>
+                    <h3 class="text-xl font-semibold text-white mb-2">Apply for Registration</h3>
+                    <p class="text-gray-400 text-sm">Your wallet is not currently authorized. Submit your institution's details below to apply for network access. Applications are reviewed by the network admin.</p>
+                </div>
+                
+                <form id="form-apply-hospital" class="space-y-4 text-left" onsubmit="event.preventDefault(); submitHospitalApplication();">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Institution Name</label>
+                        <input type="text" id="apply-hosp-name" required class="input-glass w-full px-4 py-2 rounded-lg text-sm text-white" placeholder="e.g., General Hospital">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Contact Email</label>
+                        <input type="email" id="apply-hosp-email" required class="input-glass w-full px-4 py-2 rounded-lg text-sm text-white" placeholder="admin@hospital.com">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">License / Registration Number</label>
+                        <input type="text" id="apply-hosp-license" class="input-glass w-full px-4 py-2 rounded-lg text-sm text-white" placeholder="Optional">
+                    </div>
+                    <!-- The wallet address is automatically attached from the connected account -->
+                    <button type="submit" id="btn-apply-hospital" class="btn-neon w-full py-3 rounded-lg font-semibold mt-4">Submit Application</button>
+                </form>
+            </div>
+
+            <!-- Interface for Authorized Hospitals -->
+            <div id="h-authorized" class="hidden max-w-2xl glass-card p-6 rounded-xl border-neon/20">
+                <div class="flex items-center gap-3 mb-6 pb-4 border-b border-white/10">
+                    <span class="bg-neon/10 text-neon px-3 py-1 rounded-full text-xs font-semibold border border-neon/20">Active Authority</span>
+                    <span id="h-name-display" class="text-white font-medium">Hospital Name</span>
+                </div>
+                
+                <h2 class="text-lg font-semibold text-white mb-4">Issue New Record</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Patient Wallet Address</label>
+                        <input type="text" id="h-patient" class="input-glass w-full px-4 py-2 rounded-lg text-sm text-white font-mono" placeholder="0x...">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Category</label>
+                            <select id="h-cat" class="input-glass w-full px-4 py-2 rounded-lg text-sm text-white">
+                                <option>Consultation</option><option>Lab Result</option><option>Prescription</option><option>Imaging</option><option>Vaccination</option><option>Surgery</option><option>Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Encrypted File Hash / IPFS CID</label>
+                            <input type="text" id="h-file" class="input-glass w-full px-4 py-2 rounded-lg text-sm text-white font-mono" placeholder="bafy...">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Clinical Note</label>
+                        <textarea id="h-note" rows="3" class="input-glass w-full px-4 py-2 rounded-lg text-sm text-white resize-none" placeholder="Provide a brief clinical summary..."></textarea>
+                    </div>
+                    <button id="btn-add-record" class="btn-neon w-full py-3 rounded-lg font-semibold mt-2">Publish Record On-Chain</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. ADMIN TAB -->
+        <section id="tab-admin" class="tab-content hidden space-y-6">
+            <div class="flex justify-between items-end">
+                <div>
+                    <h1 class="text-2xl font-bold text-white mb-1">Network Administration</h1>
+                    <p class="text-gray-400 text-sm">Manage institutional access control and registry.</p>
+                </div>
+            </div>
+
+            <div id="a-unauthorized" class="glass-card p-8 rounded-xl text-center border-red-500/20">
+                <span class="text-3xl mb-4 block">⛔</span>
+                <h3 class="text-xl font-semibold text-white mb-2">Access Denied</h3>
+                <p class="text-gray-400 text-sm max-w-md mx-auto">Only the contract deployer (Admin) can access this infrastructure management interface.</p>
+            </div>
+
+            <div id="a-authorized" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Register Hospital -->
+                <div class="lg:col-span-1 glass-card p-6 rounded-xl h-fit">
+                    <h2 class="text-lg font-semibold text-white mb-4">Register Institution</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Institution Wallet</label>
+                            <input type="text" id="a-hosp-address" class="input-glass w-full px-4 py-2 rounded-lg text-sm text-white font-mono" placeholder="0x...">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Institution Name</label>
+                            <input type="text" id="a-hosp-name" class="input-glass w-full px-4 py-2 rounded-lg text-sm text-white" placeholder="e.g., General Hospital">
+                        </div>
+                        <button id="btn-register-hospital" class="btn-neon w-full py-2 rounded-lg font-medium text-sm">Add to Registry</button>
+                    </div>
+                </div>
+
+                <!-- Hospital List -->
+                <div class="lg:col-span-2 glass-card p-0 rounded-xl overflow-hidden">
+                    <div class="p-6 border-b border-white/5">
+                        <h2 class="text-lg font-semibold text-white">Registered Institutions</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-white/5 text-gray-400">
+                                <tr>
+                                    <th class="px-6 py-3 font-medium">Institution Name</th>
+                                    <th class="px-6 py-3 font-medium">Wallet Address</th>
+                                    <th class="px-6 py-3 font-medium">Status</th>
+                                    <th class="px-6 py-3 font-medium text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="a-hospitals-list" class="divide-y divide-white/5">
+                                <tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 italic">Connect admin wallet to load registry.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto py-6 border-t border-white/5 text-center text-xs text-gray-500">
+        <p>© 2026 MediVault <a href="https://botchain.ai" target="_blank" class="text-blue-400 hover:underline"> BOT Chain</a> <a href="https://scan.botchain.ai" target="_blank" class="text-blue-400 hover:underline">Explorer Botchain</a></p>
+    </footer>
+
+    <!-- Toasts container -->
+    <div id="toast-container"></div>
+
+    <!-- Application Logic -->
+    <script>
+        // ---------------------------------------------------------
+        // 1. CONFIGURATION & ABI
+        // ---------------------------------------------------------
+        // TODO: Replace with your deployed contract address
+        const CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000"; 
+        
+        // Full ABI
+        const ABI = [{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"patient","type":"address"},{"indexed":true,"internalType":"address","name":"doctor","type":"address"},{"indexed":false,"internalType":"uint256","name":"until","type":"uint256"}],"name":"AccessGranted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"patient","type":"address"},{"indexed":true,"internalType":"address","name":"doctor","type":"address"}],"name":"AccessRevoked","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"hospital","type":"address"},{"indexed":false,"internalType":"string","name":"name","type":"string"}],"name":"HospitalAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"hospital","type":"address"}],"name":"HospitalRemoved","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"patient","type":"address"},{"indexed":true,"internalType":"address","name":"hospital","type":"address"},{"indexed":false,"internalType":"uint256","name":"id","type":"uint256"}],"name":"RecordAdded","type":"event"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"address","name":"","type":"address"}],"name":"accessUntil","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"addHospital","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"h","type":"address"},{"internalType":"string","name":"name","type":"string"}],"name":"addHospital","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"addRecord","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"patient","type":"address"},{"internalType":"string","name":"category","type":"string"},{"internalType":"string","name":"fileHash","type":"string"},{"internalType":"string","name":"note","type":"string"}],"name":"addRecord","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"admin","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"patient","type":"address"},{"internalType":"uint256","name":"id","type":"uint256"}],"name":"getRecord","outputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"doctor","type":"address"},{"internalType":"uint256","name":"daysValid","type":"uint256"}],"name":"grant","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"patient","type":"address"},{"internalType":"address","name":"viewer","type":"address"}],"name":"hasAccess","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"i","type":"uint256"}],"name":"hospitalAt","outputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"string","name":"","type":"string"},{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"hospitalCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"hospitals","outputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"bool","name":"active","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"myDoctors","outputs":[{"internalType":"address[]","name":"d","type":"address[]"},{"internalType":"uint256[]","name":"until","type":"uint256[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"patient","type":"address"}],"name":"recordCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"h","type":"address"}],"name":"removeHospital","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"doctor","type":"address"}],"name":"revoke","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"a","type":"address"}],"name":"transferAdmin","outputs":[],"stateMutability":"nonpayable","type":"function"}];
+
+        // ---------------------------------------------------------
+        // 2. STATE & UTILS
+        // ---------------------------------------------------------
+        let provider, signer, account, vaultContract;
+        let currentTab = 'tab-home';
+
+        function $(id) { return document.getElementById(id); }
+        
+        function formatAddress(addr) {
+            return addr ? `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}` : '';
+        }
+
+        function showToast(message, type = 'success') {
+            const container = $('toast-container');
+            const toast = document.createElement('div');
+            const color = type === 'error' ? 'border-red-500 text-red-400' : 'border-neon text-neon';
+            const bg = type === 'error' ? 'bg-red-500/10' : 'bg-neon/10';
+            toast.className = `toast glass-card border-l-4 ${color} ${bg} px-4 py-3 rounded shadow-lg text-sm font-medium`;
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 4000);
+        }
+
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            $(tabId).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active', 'text-white'));
+            $('nav-' + tabId.split('-')[1]).classList.add('active');
+
+            if (account) refreshCurrentTab();
+        }
+
+        async function safeTx(txPromise, successMsg) {
+            try {
+                const tx = await txPromise;
+                showToast("Transaction submitted. Waiting for confirmation...");
+                await tx.wait();
+                showToast(successMsg);
+                return true;
+            } catch (err) {
+                console.error(err);
+                showToast(err.reason || err.message || "Transaction failed", 'error');
+                return false;
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 3. WEB3 CONNECTION
+        // ---------------------------------------------------------
+        async function connectWallet() {
+            if (!window.ethereum) return showToast("Please install MetaMask or a Web3 wallet.", 'error');
+            try {
+                provider = new ethers.BrowserProvider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                signer = await provider.getSigner();
+                account = await signer.getAddress();
+                
+                vaultContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+                
+                $('wallet-dot').classList.replace('bg-red-500', 'bg-neon');
+                $('wallet-text').innerText = formatAddress(account);
+                
+                // Setup listeners for network/account changes
+                window.ethereum.on('accountsChanged', () => window.location.reload());
+                window.ethereum.on('chainChanged', () => window.location.reload());
+
+                refreshCurrentTab();
+                showToast("Wallet connected");
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to connect wallet", 'error');
+            }
+        }
+
+        function refreshCurrentTab() {
+            if (!vaultContract) return;
+            if (currentTab === 'tab-patient') { loadDoctors(); loadRecords(); }
+            else if (currentTab === 'tab-hospital') checkHospitalStatus();
+            else if (currentTab === 'tab-admin') { checkAdminStatus(); loadHospitals(); }
+        }
+
+        // ---------------------------------------------------------
+        // 4. PATIENT LOGIC
+        // ---------------------------------------------------------
+        async function loadDoctors() {
+            try {
+                const [docs, untils] = await vaultContract.myDoctors();
+                const now = Math.floor(Date.now() / 1000);
+                let html = '';
+                
+                for (let i = 0; i < docs.length; i++) {
+                    const isActive = Number(untils[i]) > now;
+                    const dateStr = new Date(Number(untils[i]) * 1000).toLocaleDateString();
+                    html += `
+                        <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
+                            <div>
+                                <p class="font-mono text-sm text-white">${formatAddress(docs[i])}</p>
+                                <p class="text-xs ${isActive ? 'text-neon' : 'text-red-400'}">
+                                    ${isActive ? 'Active until ' + dateStr : 'Expired'}
+                                </p>
+                            </div>
+                            ${isActive ? `<button onclick="revokeDoc('${docs[i]}')" class="btn-danger text-xs px-3 py-1 rounded">Revoke</button>` : ''}
+                        </div>
+                    `;
+                }
+                $('p-doctors-list').innerHTML = html || '<p class="text-sm text-gray-500 italic">No access grants found.</p>';
+            } catch (e) { console.error(e); }
+        }
+
+        async function revokeDoc(addr) {
+            if (await safeTx(vaultContract.revoke(addr), "Access revoked")) loadDoctors();
+        }
+
+        $('btn-grant').onclick = async () => {
+            if (!vaultContract) return showToast("Connect wallet first", 'error');
+            const addr = $('p-grant-address').value.trim();
+            const days = parseInt($('p-grant-days').value);
+            if (!ethers.isAddress(addr)) return showToast("Invalid doctor address", 'error');
+            if (days < 1 || days > 365) return showToast("Days must be 1-365", 'error');
+            
+            const btn = $('btn-grant'); btn.disabled = true; btn.innerText = "Granting...";
+            if (await safeTx(vaultContract.grant(addr, days), "Access granted")) {
+                $('p-grant-address').value = "";
+                loadDoctors();
+            }
+            btn.disabled = false; btn.innerText = "Grant Doctor Access";
+        };
+
+        $('btn-load-records').onclick = loadRecords;
+        async function loadRecords() {
+            if (!vaultContract) return;
+            const target = $('p-view-address').value.trim() || account;
+            if (!ethers.isAddress(target)) return showToast("Invalid address", 'error');
+            
+            $('p-records-list').innerHTML = '<p class="text-sm text-gray-400 animate-pulse text-center mt-10">Fetching immutable records...</p>';
+            try {
+                const count = Number(await vaultContract.recordCount(target));
+                if (count === 0) {
+                    $('p-records-list').innerHTML = '<p class="text-sm text-gray-500 italic text-center mt-10">No records found in vault.</p>';
+                    return;
+                }
+
+                let html = '';
+                // Load reverse chronological
+                for (let i = count - 1; i >= 0; i--) {
+                    const rec = await vaultContract.getRecord(target, i);
+                    // rec: [hospital(0), category(1), fileHash(2), note(3), timestamp(4)]
+                    const dateStr = new Date(Number(rec[4]) * 1000).toLocaleString();
+                    html += `
+                        <div class="p-4 bg-white/5 border border-white/5 rounded-lg space-y-2">
+                            <div class="flex justify-between items-start">
+                                <span class="px-2 py-1 text-xs font-semibold text-blue-400 bg-blue-400/10 rounded border border-blue-400/20">${rec[1]}</span>
+                                <span class="text-xs text-gray-500">${dateStr}</span>
+                            </div>
+                            <p class="text-sm text-gray-300 mt-2">${rec[3] || '<i>No clinical note</i>'}</p>
+                            <div class="pt-2 mt-2 border-t border-white/5 grid grid-cols-2 gap-2 text-xs">
+                                <div><span class="text-gray-500">Issuer:</span> <span class="font-mono text-gray-400">${formatAddress(rec[0])}</span></div>
+                                <div><span class="text-gray-500">IPFS/Hash:</span> <span class="font-mono text-gray-400">${rec[2] ? rec[2].substring(0,10)+'...' : 'None'}</span></div>
+                            </div>
+                        </div>
+                    `;
+                }
+                $('p-records-list').innerHTML = html;
+            } catch (e) {
+                console.error(e);
+                $('p-records-list').innerHTML = '<p class="text-sm text-red-400 italic text-center mt-10">Access denied or error reading vault.</p>';
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 5. HOSPITAL LOGIC
+        // ---------------------------------------------------------
+        async function checkHospitalStatus() {
+            try {
+                const h = await vaultContract.hospitals(account);
+                if (h[1] === true) { // Active
+                    $('h-unauthorized').classList.add('hidden');
+                    $('h-authorized').classList.remove('hidden');
+                    $('h-name-display').innerText = h[0];
+                } else {
+                    $('h-unauthorized').classList.remove('hidden');
+                    $('h-authorized').classList.add('hidden');
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        $('btn-add-record').onclick = async () => {
+            const pat = $('h-patient').value.trim();
+            const cat = $('h-cat').value;
+            const file = $('h-file').value.trim();
+            const note = $('h-note').value.trim();
+            
+            if (!ethers.isAddress(pat)) return showToast("Invalid patient address", 'error');
+            
+            const btn = $('btn-add-record'); btn.disabled = true; btn.innerText = "Transacting...";
+            if (await safeTx(vaultContract.addRecord(pat, cat, file, note), "Record published on-chain")) {
+                $('h-patient').value = ""; $('h-file').value = ""; $('h-note').value = "";
+            }
+            btn.disabled = false; btn.innerText = "Publish Record On-Chain";
+        }
+
+        // ---------------------------------------------------------
+        // 6. ADMIN LOGIC
+        // ---------------------------------------------------------
+        async function checkAdminStatus() {
+            try {
+                const adminAddr = await vaultContract.admin();
+                if (adminAddr.toLowerCase() === account.toLowerCase()) {
+                    $('a-unauthorized').classList.add('hidden');
+                    $('a-authorized').classList.remove('hidden');
+                } else {
+                    $('a-unauthorized').classList.remove('hidden');
+                    $('a-authorized').classList.add('hidden');
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadHospitals() {
+            try {
+                const count = Number(await vaultContract.hospitalCount());
+                let html = '';
+                for (let i = 0; i < count; i++) {
+                    const [addr, name, active] = await vaultContract.hospitalAt(i);
+                    html += `
+                        <tr class="border-b border-white/5 hover:bg-white-[0.02]">
+                            <td class="px-6 py-4 font-medium text-white">${name}</td>
+                            <td class="px-6 py-4 font-mono text-gray-400">${formatAddress(addr)}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 text-xs font-semibold rounded ${active ? 'bg-neon/10 text-neon border border-neon/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/20'}">
+                                    ${active ? 'Active' : 'Revoked'}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                ${active ? `<button onclick="removeHosp('${addr}')" class="text-xs text-red-400 hover:text-red-300 font-medium">Delist</button>` : ''}
+                            </td>
+                        </tr>
+                    `;
+                }
+                $('a-hospitals-list').innerHTML = html || '<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 italic">No institutions registered.</td></tr>';
+            } catch (e) { console.error(e); }
+        }
+
+        async function removeHosp(addr) {
+            if (await safeTx(vaultContract.removeHospital(addr), "Institution delisted")) loadHospitals();
+        }
+
+        $('btn-register-hospital').onclick = async () => {
+            const addr = $('a-hosp-address').value.trim();
+            const name = $('a-hosp-name').value.trim();
+            
+            if (!ethers.isAddress(addr)) return showToast("Invalid wallet address", 'error');
+            if (!name) return showToast("Name required", 'error');
+            
+            const btn = $('btn-register-hospital'); btn.disabled = true; btn.innerText = "Registering...";
+            if (await safeTx(vaultContract.addHospital(addr, name), "Institution registered")) {
+                $('a-hosp-address').value = ""; $('a-hosp-name').value = "";
+                loadHospitals();
+            }
+            btn.disabled = false; btn.innerText = "Add to Registry";
+        }
+
+        // ---------------------------------------------------------
+        // 7. HOSPITAL REGISTRATION APPLICATION LOGIC
+        // ---------------------------------------------------------
+        async function submitHospitalApplication() {
+            if (!account) return showToast("Please connect your wallet first", "error");
+
+            const name = $('apply-hosp-name').value.trim();
+            const email = $('apply-hosp-email').value.trim();
+            const license = $('apply-hosp-license').value.trim();
+            const btn = $('btn-apply-hospital');
+            
+            if (!name || !email) return showToast("Please fill in required fields", "error");
+            
+            btn.disabled = true;
+            btn.innerText = "Submitting...";
+            
+            try {
+                // NOTE: Since the smart contract does not have an on-chain queue,
+                // you would integrate your off-chain backend (API/Database) here.
+                /*
+                await fetch('YOUR_BACKEND_ENDPOINT/apply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ wallet: account, name, email, license })
+                });
+                */
+
+                // Mocking network delay for the UI
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                showToast("Application submitted successfully! The admin will review your request.");
+                $('form-apply-hospital').reset();
+            } catch (error) {
+                console.error(error);
+                showToast("Failed to submit application", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Submit Application";
+            }
+        }
+
+        // Init
+        $('btn-connect').onclick = connectWallet;
+    </script>
+</body>
+</html>
